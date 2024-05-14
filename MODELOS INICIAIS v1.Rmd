@@ -1,0 +1,577 @@
+---
+title: "modelos iniciais 1"
+author: "Renan Machado"
+date: "2024-04-11"
+output: html_document
+---
+ 
+#Pacotes ultilizados
+```{r}
+library(ltm)
+library(readxl)
+#library(mirt)
+library(tidyverse)
+library(psych)
+library(polycor)
+library(mirt)
+```
+
+```{r}
+dados_25_03 <- read_excel("dados_25_03.xlsx")
+```
+
+```{r}
+fit2 <- grm(dados_25_03)
+```
+
+```{r}
+a <- plot(fit2,items = 1, lwd = 2, cex = 1.2, legend = TRUE, cx = "left",
+     xlab = "Latent Trait", cex.main = 1.5, cex.lab = 1.3, cex.axis = 1.1)
+
+a
+```
+
+
+```{r}
+# Curvas são produzidas
+
+par(mfrow = c(2, 2))
+plot(fit2, lwd = 2, cex = 1.2, legend = TRUE, cx = "left",
+     xlab = "Latent Trait", cex.main = 1.5, cex.lab = 1.3, cex.axis = 1.1)
+```
+
+
+# tipo = "IIC"
+```{r}
+plot(fit2, type = "IIC", lwd = 2, cex = 1.2, legend = TRUE, cx = "topleft",
+     xlab = "Latent Trait", cex.main = 1.5, cex.lab = 1.3, cex.axis = 1.1)
+```
+
+
+```{r}
+par(mfrow = c(2, 2))
+for (i in 1:24) {
+  plot(fit2, type = "IIC", items = i, lwd = 2, cex = 1.2, legend = TRUE, cx = "topleft",
+       xlab = "Latent Trait", cex.main = 1.5, cex.lab = 1.3, cex.axis = 1.1)
+}
+
+```
+
+
+# para a curva de informações do teste, precisamos especificar novamente `items = 0'
+```{r}
+plot(fit2, type = "IIC", items = 0, lwd = 2, xlab = "Latent Trait",
+     cex.main = 1.5, cex.lab = 1.3, cex.axis = 1.1)
+```
+
+
+# As curvas características da categoria de resposta ao item podem ser plotadas
+# para cada categoria de resposta separadamente como segue
+```{r}
+par(mfrow = c(2, 2))
+plot(fit2, category = 1, lwd = 2, cex = 1.2, legend = TRUE, cx = -4.5,
+     cy = 0.85, xlab = "Latent Trait", cex.main = 1.5, cex.lab = 1.3,
+     cex.axis = 1.1)
+for (ctg in 2:3) {
+      plot(fit2, category = ctg, lwd = 2, cex = 1.2, annot = FALSE,
+           xlab = "Latent Trait", cex.main = 1.5, cex.lab = 1.3,
+           cex.axis = 1.1)
+}
+```
+
+
+####################
+# Informações sobre o item 
+```{r}
+information(fit2, c(-4, 4))
+
+information(fit2, c(-4, 4), items = c(1, 6))
+```
+
+#### NOVAS ATUALIZAÇÕES 23/04
+
+
+```{r}
+dados_edit1 <- dados_25_03 %>%
+  mutate(
+    s2 = case_when(
+      is.na(s2) ~ NA_real_,
+      s2 == 2 ~ 1,
+      TRUE ~ 0
+    ),
+    c3 = case_when(
+      is.na(c3) ~ NA_real_,
+      c3 == 2 ~ 1,
+      TRUE ~ 0
+    )
+  )%>%
+  select(-f1)
+```
+
+
+
+```{r}
+fit3 <- grm(dados_edit1)
+```
+
+```{r}
+c <- plot(fit3,items = 1, lwd = 2, cex = 1.2, legend = TRUE, cx = "left",
+     xlab = "Latent Trait", cex.main = 1.5, cex.lab = 1.3, cex.axis = 1.1)
+
+c
+```
+
+```{r}
+# Curvas são produzidas
+
+par(mfrow = c(2, 2))
+plot(fit3, lwd = 2, cex = 1.2, legend = TRUE, cx = "left",
+     xlab = "Latent Trait", cex.main = 1.5, cex.lab = 1.3, cex.axis = 1.1)
+```
+
+```{r}
+plot(fit3, type = "IIC", lwd = 2, cex = 1.2, legend = TRUE, cx = "topleft",
+     xlab = "Latent Trait", cex.main = 1.5, cex.lab = 1.3, cex.axis = 1.1)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+parametros de cada curva caracteristica com 3 parametros um theta um b e um alpha.
+```{r}
+fit4 <- grm(data = dados_25_03)
+
+# Obtendo os valores de theta para cada indivíduo
+theta <- factor.scores(fit4)
+
+# Exibindo os valores de theta
+print(theta)
+```
+
+```{r}
+fit4 <- ltm::grm(dados_edit1)
+
+# Calcular os escores fatoriais
+theta1 <- ltm::factor.scores(fit4,resp.patterns = dados_edit1)
+
+print(theta1)
+```
+
+
+```{r}
+
+summary(fit3)
+parametros <- coef(fit3)
+
+# Exibir os resultados
+print(parametros)
+
+```
+```{r}
+vetor= dados_edit1[1,]
+factor.scores(fit3, resp.patterns= vetor)
+
+```
+
+
+```{r}
+calcular_alfa_cronbach <- function(dados_edit1) {
+  # Remover NA
+  dados_sem_na <- na.omit(dados_edit1)
+  
+  # NA
+  if (nrow(dados_sem_na) < nrow(dados_edit1)) {
+    warning("")
+  }
+  
+  n_itens <- ncol(dados_sem_na)
+  n_casos <- nrow(dados_sem_na)
+  correlacao_itens <- cor(dados_sem_na)
+  var_total_itens <- apply(dados_sem_na, 2, var)
+  var_total_escores <- var(rowSums(dados_sem_na))
+  
+  #  coeficiente alfa de Cronbach
+  alfa <- (n_itens / (n_itens - 1)) * (1 - sum(var_total_itens) / var_total_escores)
+  
+  return(alfa)
+}
+```
+
+
+```{r}
+
+coef_alfa <- calcular_alfa_cronbach(dados_edit1)
+print(coef_alfa)
+
+```
+
+
+```{r}
+?polychor.matrix
+
+#polycor<- polychor.matrix(x,v)
+```
+
+
+```{r}
+?simdata 
+```
+
+
+```{r}
+#library(msm)
+```
+
+```{r}
+#install.packages("http://www.est.ufmg.br/~msantos/mcurso2013_1.0.zip", repos = NULL, type = "source")
+#library(mcurso2013)
+```
+
+
+```{r}
+dados_edit2 <- dados_25_03 %>%
+  mutate(
+    s2 = case_when(
+      is.na(s2) ~ NA_real_,
+      s2 == 2 ~ 1,
+      TRUE ~ 0
+    ),
+    c3 = case_when(
+      is.na(c3) ~ NA_real_,
+      c3 == 2 ~ 1,
+      TRUE ~ 0
+    )
+  )%>%
+  select(-f1)
+```
+
+
+```{r}
+fit3 <- grm(dados_edit1)
+```
+
+
+
+
+```{r}
+
+
+?graded
+library(mirt)
+
+data <- matrix(c(1, 1, 0, 0,
+                 1, 0, 1, 1,
+                 0, 1, 0, 0,
+                 1, 1, 1, 1,
+                 0, 0, 1, 0), 
+               ncol = 4, byrow = TRUE)
+
+model <- mirt(data, 
+              model = "graded",  
+              itemtype = "graded")
+
+summary(model)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###################################################
+### preliminaries
+###################################################
+library(ltm)
+data(LSAT)
+data(Environment)
+data(WIRS)
+
+
+###################################################
+### Analysis of LSAT data set -- Section 3.1
+###################################################
+
+# descriptive statistics
+descript(LSAT)
+
+
+###########################
+# constrained Rasch model #
+###########################
+fit1 <- rasch(LSAT, constraint = cbind(length(LSAT) + 1, 1))
+summary(fit1)
+
+# coefficients and conditional proabibilities
+coef(fit1, prob = TRUE, order = TRUE)
+
+# Goodness-of-Fit using Bootstrap
+GoF.rasch(fit1, B = 199)
+
+# Goodness-of-Fit in the margins
+margins(fit1)
+margins(fit1, type = "three-way", nprint = 2)
+
+
+#############################
+# unconstrained Rasch model #
+#############################
+fit2 <- rasch(LSAT)
+summary(fit2)
+
+# likelihood ratio test between constrained and unconstrained models
+anova(fit1, fit2)
+
+# fit of the three-way margins
+margins(fit2, type = "three-way", nprint = 2)
+
+
+##############
+# Extensions #
+##############
+
+# Two-Parameter Logistic model
+fit3 <- ltm(LSAT ~ z1)
+anova(fit2, fit3)
+
+# Rasch model with guessing parameter
+fit4 <- tpm(LSAT, type = "rasch", max.guessing = 1)
+anova(fit2, fit4)
+
+
+#############################################
+# Item Charecteristc and Information Curves #
+#############################################
+
+# put all plots in one figure
+par(mfrow = c(2, 2))
+
+# by default the Item Characteristic Curves are plotted;
+# we include a legend
+plot(fit2, legend = TRUE, cx = "bottomright", lwd = 3,
+     cex.main = 1.5, cex.lab = 1.3, cex = 1.1)
+
+# to plot the Item Information Curves the `type' argument is used;
+# since we included a legend in the ICCs plot no extra annotation is
+# required --> `annot = FALSE'
+plot(fit2, type = "IIC", annot = FALSE, lwd = 3, cex.main = 1.5,
+     cex.lab = 1.3)
+
+# the Test Information Curve is plotted by using both `type = "IIC"'
+# and `items = 0'
+plot(fit2, type = "IIC", items = 0, lwd = 3, cex.main = 1.5,
+     cex.lab = 1.3)
+
+# we also include the amount of Test information in the intervals
+# (-4, 0) and (0, 4)
+plot(0:1, 0:1, type = "n", ann = FALSE, axes = FALSE)
+info1 <- information(fit2, c(-4, 0))
+info2 <- information(fit2, c(0, 4))
+text(0.5, 0.5, labels = paste("Total Information:", round(info1$InfoTotal, 3),
+     "\n\nInformation in (-4, 0):", round(info1$InfoRange, 3),
+     paste("(", round(100 * info1$PropRange, 2), "%)", sep = ""),
+     "\n\nInformation in (0, 4):", round(info2$InfoRange, 3),
+     paste("(", round(100 * info2$PropRange, 2), "%)", sep = "")), cex = 1.5)
+
+
+#####################################
+# Factor Scores - Ability Estimates #
+#####################################
+
+# ability estimates for the observed response patterns
+factor.scores(fit2)
+
+# ability estimates for specific response patterns
+factor.scores(fit2, resp.patterns = rbind(c(0,1,1,0,0), c(0,1,0,1,0)))
+
+
+
+
+###################################################
+### Analysis of Environment data set -- Section 3.2
+###################################################
+
+# descriptive statistics
+descript(Environment)
+
+rcor.test(Environment, method = "kendall")
+
+
+#####################################
+# constrained Graded Response Model #
+#####################################
+fit1 <- grm(Environment, constrained = TRUE)
+fit1
+
+
+# fit of the margins
+margins(fit1)
+margins(fit1, type = "three")
+
+
+#######################################
+# unconstrained Graded Response Model #
+#######################################
+fit2 <- grm(Environment)
+fit2
+
+# likelihood ratio test between constrained and unconstrained models
+anova(fit1, fit2)
+
+
+#############################################
+# Item Charecteristc and Information Curves #
+#############################################
+
+# produce 4 plots per page
+par(mfrow = c(2, 2))
+
+# again by default the Item Response Category Characterstic
+# Curves are produced; we include a legend
+plot(fit2, lwd = 2, cex = 1.2, legend = TRUE, cx = "left",
+     xlab = "Latent Trait", cex.main = 1.5, cex.lab = 1.3, cex.axis = 1.1)
+
+# the Item Information Curves are produced by specifying
+# `type = "IIC"'
+plot(fit2, type = "IIC", lwd = 2, cex = 1.2, legend = TRUE, cx = "topleft",
+     xlab = "Latent Trait", cex.main = 1.5, cex.lab = 1.3, cex.axis = 1.1)
+
+# for the Test Information Curve we again need to specify `items = 0'
+plot(fit2, type = "IIC", items = 0, lwd = 2, xlab = "Latent Trait",
+     cex.main = 1.5, cex.lab = 1.3, cex.axis = 1.1)
+
+# we also include the amount of Test information in the intervals
+# (-4, 0) and (0, 4)
+info1 <- information(fit2, c(-4, 0))
+info2 <- information(fit2, c(0, 4))
+text(-1.9, 8, labels = paste("Information in (-4, 0):",
+     paste(round(100 * info1$PropRange, 1), "%", sep = ""),
+     "\n\nInformation in (0, 4):",
+     paste(round(100 * info2$PropRange, 1), "%", sep = "")), cex = 1.2)
+
+
+# The Item Response Category Characteristic Curves can be plotted
+# for each response category separately as follows
+par(mfrow = c(2, 2))
+plot(fit2, category = 1, lwd = 2, cex = 1.2, legend = TRUE, cx = -4.5,
+     cy = 0.85, xlab = "Latent Trait", cex.main = 1.5, cex.lab = 1.3,
+     cex.axis = 1.1)
+for (ctg in 2:3) {
+      plot(fit2, category = ctg, lwd = 2, cex = 1.2, annot = FALSE,
+           xlab = "Latent Trait", cex.main = 1.5, cex.lab = 1.3,
+           cex.axis = 1.1)
+}
+
+
+####################
+# Item Information #
+####################
+information(fit2, c(-4, 4))
+
+information(fit2, c(-4, 4), items = c(1, 6))
+
+
+
+
+###################################################
+### Analysis of WIRS data set -- Section 4
+###################################################
+
+# Two-Factor and Interaction models
+fit1 <- ltm(WIRS ~ z1 + z2)
+fit2 <- ltm(WIRS ~ z1 * z2)
+fit1
+fit2
+
+# likelihood ratio test
+anova(fit1, fit2)
+
+
+
+
+
+
+
+
